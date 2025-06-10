@@ -2,280 +2,279 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Catatan Keuangan</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --warna-bg: #fff;
+      --warna-teks: #000;
+      --warna-primer: #4caf50;
+    }
+
+    [data-tema="gelap"] {
+      --warna-bg: #121212;
+      --warna-teks: #fff;
+      --warna-primer: #81c784;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
-      transition: background 0.3s, color 0.3s;
+      font-family: sans-serif;
+      background: var(--warna-bg);
+      color: var(--warna-teks);
     }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
+
     header {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      background: #4CAF50;
-      color: white;
-      padding: 10px 20px;
+      background: var(--warna-primer);
+      padding: 10px;
+      color: #fff;
     }
-    header img {
-      height: 40px;
-    }
-    main {
-      padding: 20px;
+
+    header h1 {
+      flex: 1;
       text-align: center;
+      margin: 0 10px;
     }
-    .btn {
-      display: inline-block;
-      margin: 10px;
-      padding: 10px 16px;
-      background: #4CAF50;
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-    }
-    .btn:hover {
-      background: #45a049;
-    }
-    .fab {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      background: #4CAF50;
-      color: white;
-      font-size: 28px;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-decoration: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    .dark .btn, .dark .fab {
-      background: #388E3C;
-    }
-    #ringkasan {
-      background: #e0f2f1;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 20px;
-    }
-    .dark #ringkasan {
-      background: #263238;
-    }
+
     #pinOverlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 2000;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      z-index: 99;
     }
-    #pinOverlay input {
-      font-size: 20px;
-      padding: 8px;
-      border-radius: 5px;
+
+    #pinOverlay input, #pinOverlay button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1.2em;
+      border-radius: 8px;
       border: none;
-      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    #pinOverlay button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      font-size: 16px;
+
+    main {
+      padding: 15px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--warna-primer);
+      color: #fff;
+      font-size: 20px;
+      padding: 12px 20px;
+      border-radius: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: none;
+    }
+
+    #ringkasan {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 10px;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    #riwayat div {
+      background: #f1f1f1;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .tema-toggle {
+      font-size: 1.3em;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    canvas {
+      margin-top: 20px;
     }
   </style>
 </head>
-<body>
-  <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Emoji_u1f4b8.svg/120px-Emoji_u1f4b8.svg.png" alt="Logo">
-    <h1>Catatan Keuangan</h1>
-    <button id="toggleTema" style="font-size:24px;background:none;border:none;">🌞</button>
-  </header>
-
+<body data-tema="terang">
   <div id="pinOverlay">
-    <h2 style="color:white;">🔒 Masukkan PIN</h2>
-    <input type="password" id="pinInput" placeholder="****" maxlength="6">
+    <input type="password" id="pinInput" placeholder="Masukkan PIN" />
     <button onclick="cekPIN()">Masuk</button>
   </div>
 
+  <header>
+    <img src="https://img.icons8.com/emoji/48/money-bag-emoji.png" width="32" height="32" alt="logo" />
+    <h1>Catatan Keuangan</h1>
+    <button class="tema-toggle" onclick="toggleTema()" title="Ganti Tema">🌞</button>
+  </header>
+
   <main>
-    <a href="#" class="btn" onclick="catatTransaksi()">+ Catat Transaksi</a>
-    <a href="#" class="btn" onclick="lihatRiwayat()">📜 Lihat Riwayat</a>
-    <br />
-    <button class="btn" onclick="eksporJSON()">📥 Ekspor JSON</button>
-    <button class="btn" onclick="eksporCSV()">📄 Ekspor CSV</button>
-    <input type="file" id="fileInput" accept=".json" style="display:none" />
-    <button class="btn" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+    <div id="ringkasan">
+      <strong>Ringkasan Bulan Ini:</strong>
+      <div id="totalMasuk">Pemasukan: Rp0</div>
+      <div id="totalKeluar">Pengeluaran: Rp0</div>
+      <div id="saldo">Saldo: Rp0</div>
+    </div>
+
+    <form id="formTransaksi">
+      <input type="text" id="judul" placeholder="Judul transaksi" required />
+      <input type="number" id="jumlah" placeholder="Jumlah (positif/negatif)" required />
+      <input type="date" id="tanggal" required />
+      <button type="submit">Catat</button>
+    </form>
+
+    <canvas id="grafikBulanan" height="200"></canvas>
+
+    <section id="riwayat">
+      <h3>Riwayat Transaksi</h3>
+      <!-- Transaksi tampil di sini -->
+    </section>
+
+    <button onclick="ekspor('json')">Ekspor JSON</button>
+    <button onclick="ekspor('csv')">Ekspor CSV</button>
   </main>
 
-  <section id="ringkasan">
-    <h2>Ringkasan Bulan Ini</h2>
-    <p>📥 Pemasukan: <span id="totalMasuk">Rp 0</span></p>
-    <p>📤 Pengeluaran: <span id="totalKeluar">Rp 0</span></p>
-    <p>💰 Saldo: <span id="saldo">Rp 0</span></p>
-  </section>
+  <button class="fab" onclick="document.getElementById('formTransaksi').scrollIntoView({behavior:'smooth'})">+ Catat</button>
 
-  <canvas id="grafikBulanan" height="200"></canvas>
-
-  <a href="#" class="fab" onclick="catatTransaksi()">+</a>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const PIN_DEFAULT = "1234";
+    const data = JSON.parse(localStorage.getItem("keuangan") || "[]");
+    const pinSimpan = localStorage.getItem("pin") || "1234";
+    const tema = localStorage.getItem("tema") || "terang";
+    document.body.dataset.tema = tema;
+    document.querySelector(".tema-toggle").textContent = tema === "gelap" ? "🌙" : "🌞";
+
     function cekPIN() {
-      const input = document.getElementById("pinInput").value;
-      const pinBenar = localStorage.getItem("pin") || PIN_DEFAULT;
-      if (input === pinBenar) {
+      const pin = document.getElementById("pinInput").value;
+      if (pin === pinSimpan) {
         document.getElementById("pinOverlay").style.display = "none";
+        tampilkanSemua();
       } else {
-        alert("❌ PIN salah!");
+        alert("PIN salah!");
       }
     }
 
-    function formatRupiah(angka) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+    function toggleTema() {
+      const sekarang = document.body.dataset.tema;
+      const baru = sekarang === "gelap" ? "terang" : "gelap";
+      document.body.dataset.tema = baru;
+      localStorage.setItem("tema", baru);
+      document.querySelector(".tema-toggle").textContent = baru === "gelap" ? "🌙" : "🌞";
     }
 
-    function updateRingkasan() {
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      let totalMasuk = 0, totalKeluar = 0;
-      const bulanIni = new Date().getMonth();
+    function catatTransaksi(e) {
+      e.preventDefault();
+      const judul = document.getElementById("judul").value.trim();
+      const jumlah = parseFloat(document.getElementById("jumlah").value);
+      const tanggal = document.getElementById("tanggal").value;
+      if (!judul || isNaN(jumlah) || !tanggal) return alert("Isi semua kolom dengan benar!");
 
-      data.forEach(item => {
-        const tanggal = new Date(item.tanggal);
-        if (tanggal.getMonth() === bulanIni) {
-          const jumlah = Number(item.jumlah || item.nominal);
-          if (item.kategori === 'Pemasukan') totalMasuk += jumlah;
-          else totalKeluar += jumlah;
-        }
+      data.push({ judul, jumlah, tanggal });
+      localStorage.setItem("keuangan", JSON.stringify(data));
+      e.target.reset();
+      tampilkanSemua();
+    }
+
+    function tampilkanSemua() {
+      const bulanIni = new Date().toISOString().slice(0, 7);
+      const dataBulanIni = data.filter(d => d.tanggal.slice(0, 7) === bulanIni);
+      const masuk = dataBulanIni.filter(d => d.jumlah > 0).reduce((a,b)=>a+b.jumlah,0);
+      const keluar = dataBulanIni.filter(d => d.jumlah < 0).reduce((a,b)=>a+b.jumlah,0);
+      document.getElementById("totalMasuk").textContent = "Pemasukan: Rp" + masuk.toLocaleString();
+      document.getElementById("totalKeluar").textContent = "Pengeluaran: Rp" + Math.abs(keluar).toLocaleString();
+      document.getElementById("saldo").textContent = "Saldo: Rp" + (masuk + keluar).toLocaleString();
+      lihatRiwayat(dataBulanIni);
+      tampilkanGrafik();
+    }
+
+    function lihatRiwayat(dataTampil) {
+      const r = document.getElementById("riwayat");
+      r.innerHTML = "<h3>Riwayat Transaksi</h3>";
+      dataTampil.slice().reverse().forEach(d => {
+        r.innerHTML += `<div><strong>${d.judul}</strong><br>Rp${d.jumlah.toLocaleString()}<br><small>${new Date(d.tanggal).toLocaleDateString("id-ID")}</small></div>`;
       });
-
-      document.getElementById('totalMasuk').textContent = formatRupiah(totalMasuk);
-      document.getElementById('totalKeluar').textContent = formatRupiah(totalKeluar);
-      document.getElementById('saldo').textContent = formatRupiah(totalMasuk - totalKeluar);
     }
 
-    function eksporJSON() {
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'catatan-keuangan.json';
-      link.click();
+    function ekspor(format) {
+      let file = "";
+      if (format === "json") {
+        file = "data:application/json," + encodeURIComponent(JSON.stringify(data));
+        download(file, "catatan-keuangan.json");
+      } else if (format === "csv") {
+        const header = "Judul,Jumlah,Tanggal\n";
+        const rows = data.map(d => `${d.judul},${d.jumlah},${d.tanggal}`).join("\n");
+        file = "data:text/csv," + encodeURIComponent(header + rows);
+        download(file, "catatan-keuangan.csv");
+      }
     }
 
-    function eksporCSV() {
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      if (!data.length) return alert("Belum ada data");
+    function download(href, filename) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = filename;
+      a.click();
+    }
 
-      let csv = 'Tanggal,Judul,Jumlah,Kategori\n';
-      data.forEach(item => {
-        csv += `"${item.tanggal}","${item.judul}",${item.jumlah},"${item.kategori}"\n`;
+    function tampilkanGrafik() {
+      const ctx = document.getElementById("grafikBulanan");
+      const bulanan = {};
+      data.forEach(d => {
+        const bulan = d.tanggal.slice(0, 7);
+        if (!bulanan[bulan]) bulanan[bulan] = 0;
+        bulanan[bulan] += d.jumlah;
       });
+      const label = Object.keys(bulanan).sort();
+      const nilai = label.map(l => bulanan[l]);
 
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'catatan-keuangan.csv';
-      link.click();
-    }
+      if (window.grafik) window.grafik.destroy();
+      if (label.length === 0) {
+        ctx.style.display = "none";
+        return;
+      } else {
+        ctx.style.display = "block";
+      }
 
-    document.getElementById("fileInput").addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const imported = JSON.parse(evt.target.result);
-          const lama = JSON.parse(localStorage.getItem("transaksi")) || [];
-          const gabung = [...lama, ...imported];
-          localStorage.setItem("transaksi", JSON.stringify(gabung));
-          alert("✅ Data berhasil diimpor!");
-          location.reload();
-        } catch (err) {
-          alert("❌ Gagal import!");
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    function catatTransaksi() {
-      const judul = prompt("Judul?");
-      const jumlah = parseFloat(prompt("Jumlah?"));
-      const kategori = confirm("Pilih OK = Pemasukan, Batal = Pengeluaran") ? "Pemasukan" : "Pengeluaran";
-      const tanggal = prompt("Tanggal (YYYY-MM-DD)?", new Date().toISOString().slice(0,10));
-      if (!judul || !jumlah || !tanggal) return alert("Input tidak lengkap");
-
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      data.push({ judul, jumlah, kategori, tanggal });
-      localStorage.setItem('transaksi', JSON.stringify(data));
-      updateRingkasan();
-      alert("✅ Disimpan!");
-    }
-
-    function lihatRiwayat() {
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      let teks = "Riwayat Transaksi:\n\n";
-      data.slice().reverse().forEach(d => {
-        teks += `${d.tanggal} - ${d.judul} - ${formatRupiah(d.jumlah)} (${d.kategori})\n`;
-      });
-      alert(teks || "Belum ada data");
-    }
-
-    // Tema
-    const tombolTema = document.getElementById('toggleTema');
-    const tema = localStorage.getItem('tema');
-    if (tema === 'dark') {
-      document.body.classList.add('dark');
-      tombolTema.textContent = '🌙';
-    }
-    tombolTema.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      const dark = document.body.classList.contains('dark');
-      localStorage.setItem('tema', dark ? 'dark' : 'light');
-      tombolTema.textContent = dark ? '🌙' : '🌞';
-    });
-
-    // Grafik
-    document.addEventListener("DOMContentLoaded", () => {
-      updateRingkasan();
-      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      const bulanan = Array(12).fill(0);
-      data.forEach(item => {
-        const bulan = new Date(item.tanggal).getMonth();
-        const jumlah = Number(item.jumlah || 0);
-        if (item.kategori === "Pemasukan") bulanan[bulan] += jumlah;
-        else bulanan[bulan] -= jumlah;
-      });
-
-      new Chart(document.getElementById('grafikBulanan'), {
-        type: 'line',
+      window.grafik = new Chart(ctx, {
+        type: "bar",
         data: {
-          labels: ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"],
+          labels: label,
           datasets: [{
-            label: 'Saldo Bulanan',
-            data: bulanan,
-            borderColor: '#4CAF50',
-            backgroundColor: 'rgba(76, 175, 80, 0.2)',
-            tension: 0.3,
-            fill: true,
+            label: "Saldo Bulanan",
+            data: nilai,
+            backgroundColor: "rgba(76, 175, 80, 0.5)",
+            borderColor: "rgba(76, 175, 80, 1)",
+            borderWidth: 1
           }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
         }
       });
-    });
+    }
+
+    document.getElementById("formTransaksi").addEventListener("submit", catatTransaksi);
   </script>
 </body>
 </html>
