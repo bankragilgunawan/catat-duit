@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Catatan Keuangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; color: #333; }
+    h1, h2 { text-align: center; }
+    form, .summary, .buttons { max-width: 500px; margin: auto; margin-top: 20px; }
+    input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #4CAF50; color: white; border: none; }
+    .dark { background: #121212; color: #eee; }
+    .dark input, .dark select { background: #333; color: #eee; border: 1px solid #555; }
+    .toggle-theme { position: fixed; top: 10px; right: 10px; font-size: 20px; background: none; border: none; }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌞</button>
+  <h1>Catatan Keuangan</h1>
+
+  <form id="formCatat">
+    <input type="text" id="judul" placeholder="Judul" required>
+    <input type="number" id="jumlah" placeholder="Jumlah" required>
+    <select id="kategori">
+      <option value="Pemasukan">Pemasukan</option>
+      <option value="Pengeluaran">Pengeluaran</option>
+    </select>
+    <input type="date" id="tanggal" required>
+    <button type="submit">Simpan</button>
+  </form>
+
+  <div class="summary">
+    <h2>Ringkasan</h2>
+    <p>📥 Pemasukan: <span id="totalMasuk">Rp 0</span></p>
+    <p>📤 Pengeluaran: <span id="totalKeluar">Rp 0</span></p>
+    <p>💰 Saldo: <span id="saldo">Rp 0</span></p>
+  </div>
+
+  <div class="buttons">
+    <button onclick="eksporJSON()">📥 Ekspor ke JSON</button>
+    <button onclick="importJSON()">📤 Import dari JSON</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+  </div>
+
+  <script>
+    function formatRupiah(angka) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+    }
+
+    function updateRingkasan() {
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      let totalMasuk = 0;
+      let totalKeluar = 0;
+      data.forEach(item => {
+        const nominal = Number(item.jumlah);
+        if (item.kategori === "Pemasukan") totalMasuk += nominal;
+        else totalKeluar += nominal;
+      });
+      document.getElementById('totalMasuk').textContent = formatRupiah(totalMasuk);
+      document.getElementById('totalKeluar').textContent = formatRupiah(totalKeluar);
+      document.getElementById('saldo').textContent = formatRupiah(totalMasuk - totalKeluar);
+    }
+
+    document.getElementById('formCatat').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        judul: document.getElementById('judul').value,
+        jumlah: parseFloat(document.getElementById('jumlah').value),
+        kategori: document.getElementById('kategori').value,
+        tanggal: document.getElementById('tanggal').value
+      };
+      let transaksi = JSON.parse(localStorage.getItem('transaksi') || '[]');
+      transaksi.push(data);
+      localStorage.setItem('transaksi', JSON.stringify(transaksi));
+      alert("✅ Tersimpan!");
+      this.reset();
+      updateRingkasan();
+    });
+
+    function eksporJSON() {
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'catatan-keuangan.json';
+      link.click();
+    }
+
+    function importJSON() {
+      document.getElementById('fileInput').click();
+    }
+
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw "Format salah";
+          const lama = JSON.parse(localStorage.getItem('transaksi')) || [];
+          const gabung = [...lama, ...imported];
+          localStorage.setItem('transaksi', JSON.stringify(gabung));
+          alert("✅ Data berhasil diimpor!");
+          updateRingkasan();
+        } catch (err) {
+          alert("❌ Gagal import: " + err);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle("dark");
+      const icon = document.querySelector(".toggle-theme");
+      icon.textContent = body.classList.contains("dark") ? "🌙" : "🌞";
+    }
+
+    document.addEventListener("DOMContentLoaded", updateRingkasan);
+  </script>
+</body>
+</html>
