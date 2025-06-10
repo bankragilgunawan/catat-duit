@@ -1,83 +1,171 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Catatan Keuangan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; color: #333; }
-    h1, h2 { text-align: center; }
-    form, .summary, .buttons { max-width: 500px; margin: auto; margin-top: 20px; }
-    input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; }
-    button { background: #4CAF50; color: white; border: none; }
-    .dark { background: #121212; color: #eee; }
-    .dark input, .dark select { background: #333; color: #eee; border: 1px solid #555; }
-    .toggle-theme { position: fixed; top: 10px; right: 10px; font-size: 20px; background: none; border: none; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    .dark {
+      background: #121212;
+      color: #eee;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+    }
+    header img {
+      height: 40px;
+    }
+    main {
+      padding: 20px;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 16px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #45a049;
+    }
+    .fab {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #4CAF50;
+      color: white;
+      font-size: 28px;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .dark .btn, .dark .fab {
+      background: #388E3C;
+    }
+    #ringkasan {
+      background: #e0f2f1;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px;
+    }
+    .dark #ringkasan {
+      background: #263238;
+    }
+    #pinOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #pinOverlay input {
+      font-size: 20px;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      text-align: center;
+    }
+    #pinOverlay button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <button class="toggle-theme" onclick="toggleTheme()">🌞</button>
-  <h1>Catatan Keuangan</h1>
+  <header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Emoji_u1f4b8.svg/120px-Emoji_u1f4b8.svg.png" alt="Logo">
+    <h1>Catatan Keuangan</h1>
+    <button id="toggleTema" style="font-size:24px;background:none;border:none;">🌞</button>
+  </header>
 
-  <form id="formCatat">
-    <input type="text" id="judul" placeholder="Judul" required>
-    <input type="number" id="jumlah" placeholder="Jumlah" required>
-    <select id="kategori">
-      <option value="Pemasukan">Pemasukan</option>
-      <option value="Pengeluaran">Pengeluaran</option>
-    </select>
-    <input type="date" id="tanggal" required>
-    <button type="submit">Simpan</button>
-  </form>
+  <div id="pinOverlay">
+    <h2 style="color:white;">🔒 Masukkan PIN</h2>
+    <input type="password" id="pinInput" placeholder="****" maxlength="6">
+    <button onclick="cekPIN()">Masuk</button>
+  </div>
 
-  <div class="summary">
-    <h2>Ringkasan</h2>
+  <main>
+    <a href="#" class="btn" onclick="catatTransaksi()">+ Catat Transaksi</a>
+    <a href="#" class="btn" onclick="lihatRiwayat()">📜 Lihat Riwayat</a>
+    <br />
+    <button class="btn" onclick="eksporJSON()">📥 Ekspor JSON</button>
+    <button class="btn" onclick="eksporCSV()">📄 Ekspor CSV</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none" />
+    <button class="btn" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+  </main>
+
+  <section id="ringkasan">
+    <h2>Ringkasan Bulan Ini</h2>
     <p>📥 Pemasukan: <span id="totalMasuk">Rp 0</span></p>
     <p>📤 Pengeluaran: <span id="totalKeluar">Rp 0</span></p>
     <p>💰 Saldo: <span id="saldo">Rp 0</span></p>
-  </div>
+  </section>
 
-  <div class="buttons">
-    <button onclick="eksporJSON()">📥 Ekspor ke JSON</button>
-    <button onclick="importJSON()">📤 Import dari JSON</button>
-    <input type="file" id="fileInput" accept=".json" style="display:none">
-  </div>
+  <canvas id="grafikBulanan" height="200"></canvas>
 
+  <a href="#" class="fab" onclick="catatTransaksi()">+</a>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    const PIN_DEFAULT = "1234";
+    function cekPIN() {
+      const input = document.getElementById("pinInput").value;
+      const pinBenar = localStorage.getItem("pin") || PIN_DEFAULT;
+      if (input === pinBenar) {
+        document.getElementById("pinOverlay").style.display = "none";
+      } else {
+        alert("❌ PIN salah!");
+      }
+    }
+
     function formatRupiah(angka) {
       return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
     }
 
     function updateRingkasan() {
       const data = JSON.parse(localStorage.getItem('transaksi')) || [];
-      let totalMasuk = 0;
-      let totalKeluar = 0;
+      let totalMasuk = 0, totalKeluar = 0;
+      const bulanIni = new Date().getMonth();
+
       data.forEach(item => {
-        const nominal = Number(item.jumlah);
-        if (item.kategori === "Pemasukan") totalMasuk += nominal;
-        else totalKeluar += nominal;
+        const tanggal = new Date(item.tanggal);
+        if (tanggal.getMonth() === bulanIni) {
+          const jumlah = Number(item.jumlah || item.nominal);
+          if (item.kategori === 'Pemasukan') totalMasuk += jumlah;
+          else totalKeluar += jumlah;
+        }
       });
+
       document.getElementById('totalMasuk').textContent = formatRupiah(totalMasuk);
       document.getElementById('totalKeluar').textContent = formatRupiah(totalKeluar);
       document.getElementById('saldo').textContent = formatRupiah(totalMasuk - totalKeluar);
     }
-
-    document.getElementById('formCatat').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const data = {
-        judul: document.getElementById('judul').value,
-        jumlah: parseFloat(document.getElementById('jumlah').value),
-        kategori: document.getElementById('kategori').value,
-        tanggal: document.getElementById('tanggal').value
-      };
-      let transaksi = JSON.parse(localStorage.getItem('transaksi') || '[]');
-      transaksi.push(data);
-      localStorage.setItem('transaksi', JSON.stringify(transaksi));
-      alert("✅ Tersimpan!");
-      this.reset();
-      updateRingkasan();
-    });
 
     function eksporJSON() {
       const data = JSON.parse(localStorage.getItem('transaksi')) || [];
@@ -88,38 +176,106 @@
       link.click();
     }
 
-    function importJSON() {
-      document.getElementById('fileInput').click();
+    function eksporCSV() {
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      if (!data.length) return alert("Belum ada data");
+
+      let csv = 'Tanggal,Judul,Jumlah,Kategori\n';
+      data.forEach(item => {
+        csv += `"${item.tanggal}","${item.judul}",${item.jumlah},"${item.kategori}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'catatan-keuangan.csv';
+      link.click();
     }
 
-    document.getElementById('fileInput').addEventListener('change', function(event) {
-      const file = event.target.files[0];
+    document.getElementById("fileInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(evt) {
         try {
-          const imported = JSON.parse(e.target.result);
-          if (!Array.isArray(imported)) throw "Format salah";
-          const lama = JSON.parse(localStorage.getItem('transaksi')) || [];
+          const imported = JSON.parse(evt.target.result);
+          const lama = JSON.parse(localStorage.getItem("transaksi")) || [];
           const gabung = [...lama, ...imported];
-          localStorage.setItem('transaksi', JSON.stringify(gabung));
+          localStorage.setItem("transaksi", JSON.stringify(gabung));
           alert("✅ Data berhasil diimpor!");
-          updateRingkasan();
+          location.reload();
         } catch (err) {
-          alert("❌ Gagal import: " + err);
+          alert("❌ Gagal import!");
         }
       };
       reader.readAsText(file);
     });
 
-    function toggleTheme() {
-      const body = document.body;
-      body.classList.toggle("dark");
-      const icon = document.querySelector(".toggle-theme");
-      icon.textContent = body.classList.contains("dark") ? "🌙" : "🌞";
+    function catatTransaksi() {
+      const judul = prompt("Judul?");
+      const jumlah = parseFloat(prompt("Jumlah?"));
+      const kategori = confirm("Pilih OK = Pemasukan, Batal = Pengeluaran") ? "Pemasukan" : "Pengeluaran";
+      const tanggal = prompt("Tanggal (YYYY-MM-DD)?", new Date().toISOString().slice(0,10));
+      if (!judul || !jumlah || !tanggal) return alert("Input tidak lengkap");
+
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      data.push({ judul, jumlah, kategori, tanggal });
+      localStorage.setItem('transaksi', JSON.stringify(data));
+      updateRingkasan();
+      alert("✅ Disimpan!");
     }
 
-    document.addEventListener("DOMContentLoaded", updateRingkasan);
+    function lihatRiwayat() {
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      let teks = "Riwayat Transaksi:\n\n";
+      data.slice().reverse().forEach(d => {
+        teks += `${d.tanggal} - ${d.judul} - ${formatRupiah(d.jumlah)} (${d.kategori})\n`;
+      });
+      alert(teks || "Belum ada data");
+    }
+
+    // Tema
+    const tombolTema = document.getElementById('toggleTema');
+    const tema = localStorage.getItem('tema');
+    if (tema === 'dark') {
+      document.body.classList.add('dark');
+      tombolTema.textContent = '🌙';
+    }
+    tombolTema.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const dark = document.body.classList.contains('dark');
+      localStorage.setItem('tema', dark ? 'dark' : 'light');
+      tombolTema.textContent = dark ? '🌙' : '🌞';
+    });
+
+    // Grafik
+    document.addEventListener("DOMContentLoaded", () => {
+      updateRingkasan();
+      const data = JSON.parse(localStorage.getItem('transaksi')) || [];
+      const bulanan = Array(12).fill(0);
+      data.forEach(item => {
+        const bulan = new Date(item.tanggal).getMonth();
+        const jumlah = Number(item.jumlah || 0);
+        if (item.kategori === "Pemasukan") bulanan[bulan] += jumlah;
+        else bulanan[bulan] -= jumlah;
+      });
+
+      new Chart(document.getElementById('grafikBulanan'), {
+        type: 'line',
+        data: {
+          labels: ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"],
+          datasets: [{
+            label: 'Saldo Bulanan',
+            data: bulanan,
+            borderColor: '#4CAF50',
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+            tension: 0.3,
+            fill: true,
+          }]
+        }
+      });
+    });
   </script>
 </body>
 </html>
